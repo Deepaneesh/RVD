@@ -1,0 +1,19 @@
+Package: RVD
+Type: Package
+Title: Exploring, Automating, and Creating Useful R Functions
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Deepaneesh R V",
+      email = "deepaneesh98@gmail.com",
+      role = c("aut", "cre")
+    )
+  )
+Description: Provides a collection of useful utility functions for data handling and
+    workflow automation in R. The package aims to simplify common tasks by offering
+    convenient helpers for exporting, viewing,forecasting and manipulating tabular data.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+
