@@ -8,6 +8,7 @@
 #' @return Opens the file in Excel
 #' @export
 excel_view <- function(df, format = c("csv", "xlsx")) {
+  df <- as.data.frame(df)
   format <- match.arg(format)
 
   dir_path <- file.path(getwd(), "temp")
