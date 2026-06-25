@@ -26,6 +26,8 @@ Imports:
     pacman,
     colorspace,
     viridisLite,
-    scales
+    scales,
+    shiny,
+    colourpicker
     
 
