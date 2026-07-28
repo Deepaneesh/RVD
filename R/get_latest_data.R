@@ -29,53 +29,59 @@
 #'
 #' @export
 get_latest_data <- function(path, name = NULL, ext = NULL) {
+  count <- available_files(path) %>%
+    pull(full_name) %>%
+    length()
 
-  files <- list.files(path, full.names = TRUE)
-  file_names <- basename(files)
+  if (count == 1) {
+    latest_files <- available_files(path) %>% pull(full_name)
+  } else {
+    files <- list.files(path, full.names = TRUE)
+    file_names <- basename(files)
 
-  split_data <- strsplit(file_names, " - ")
+    split_data <- strsplit(file_names, " - ")
 
-  dates <- sapply(split_data, function(x) x[1])
-  dataset_names <- sapply(split_data, function(x) x[2])
+    dates <- sapply(split_data, function(x) x[1])
+    dataset_names <- sapply(split_data, function(x) x[2])
 
-  dataset_names_clean <- sub("\\..*$", "", dataset_names)
+    dataset_names_clean <- sub("\\..*$", "", dataset_names)
 
-  dates <- as.Date(dates, format = "%d-%m-%Y")
+    dates <- as.Date(dates, format = "%d-%m-%Y")
 
-  # Filter by dataset name
-  if (!is.null(name)) {
-    idx <- grepl(name, dataset_names_clean, ignore.case = TRUE)
+    # Filter by dataset name
+    if (!is.null(name)) {
+      idx <- grepl(name, dataset_names_clean, ignore.case = TRUE)
 
-    files <- files[idx]
-    dates <- dates[idx]
-    dataset_names_clean <- dataset_names_clean[idx]
+      files <- files[idx]
+      dates <- dates[idx]
+      dataset_names_clean <- dataset_names_clean[idx]
+    }
+
+    # Filter by extension
+    if (!is.null(ext)) {
+      idx <- grepl(paste0("\\.", ext, "$"), file_names, ignore.case = TRUE)
+
+      files <- files[idx]
+      dates <- dates[idx]
+      dataset_names_clean <- dataset_names_clean[idx]
+    }
+
+    if (length(files) == 0) {
+      stop("No files found matching criteria", call. = FALSE)
+    }
+
+    # Get latest date
+    max_date <- max(dates, na.rm = TRUE)
+    idx <- which(dates == max_date)
+
+    latest_files <- files[idx]
+
+    if (length(latest_files) > 1) {
+      message("Multiple files found with the latest date:")
+      message(paste(latest_files, collapse = "\n"))
+      stop("Please specify 'name' or 'ext' to narrow down.", call. = FALSE)
+    }
   }
-
-  # Filter by extension
-  if (!is.null(ext)) {
-    idx <- grepl(paste0("\\.", ext, "$"), file_names, ignore.case = TRUE)
-
-    files <- files[idx]
-    dates <- dates[idx]
-    dataset_names_clean <- dataset_names_clean[idx]
-  }
-
-  if (length(files) == 0) {
-    stop("No files found matching criteria", call. = FALSE)
-  }
-
-  # Get latest date
-  max_date <- max(dates, na.rm = TRUE)
-  idx <- which(dates == max_date)
-
-  latest_files <- files[idx]
-
-  if (length(latest_files) > 1) {
-    message("Multiple files found with the latest date:")
-    message(paste(latest_files, collapse = "\n"))
-    stop("Please specify 'name' or 'ext' to narrow down.", call. = FALSE)
-  }
-
   message(paste0("Loading: ", latest_files))
 
   return(latest_files)
