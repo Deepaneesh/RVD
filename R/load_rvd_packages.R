@@ -72,4 +72,5 @@ load_rvd_packages <- function(update = FALSE) {
   )
 
   message("All RVD packages are loaded successfully.")
+  search()
 }
