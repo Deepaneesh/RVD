@@ -1,26 +1,32 @@
-#' Reconstruct a series from its first differences
+#' Reconstruct a series from its n-th differences
 #'
-#' Reconstructs the original series using a difference series and
-#' the original series as an anchor.
+#' Reconstructs a series from an n-th difference series and the
+#' known values in the original series. Missing values after the
+#' last known observation are reconstructed using the supplied
+#' difference series.
 #'
-#' @param diff_x A first-difference series, usually created using
-#'   `diff_series()`.
-#' @param original_x The original series containing at least one
-#'   known value to use as an anchor.
+#' @param diff_x A numeric vector containing an n-th difference series,
+#'   usually created using `diff_series()`.
+#' @param original_x A numeric vector containing the original series.
+#'   It should contain known values that can be used as anchors for
+#'   reconstruction.
+#' @param differences Integer specifying the order of differencing.
+#'   Defaults to `1`.
 #'
-#' @return A reconstructed numeric vector with the same length as
-#'   `diff_x`.
+#' @return A numeric vector with the same length as `diff_x`.
+#'   Existing values in `original_x` are preserved and missing values
+#'   after the last known observation are reconstructed.
 #'
 #' @examples
 #' x <- c(100, 108, 115, 123, 130, NA, NA)
-#' dx <- diff_series(x)
 #'
-#' dx[6:7] <- c(8, 7)
+#' d1 <- diff_series(x, differences = 1)
+#' d1[6:7] <- c(8, 7)
 #'
-#' de_diff_series(dx, x)
+#' de_diff_series(d1, x, differences = 1)
 #'
 #' @export
-de_diff_series <- function(diff_x, original_x) {
+de_diff_series <- function(diff_x, original_x, differences = 1) {
 
   if (!is.numeric(diff_x)) {
     stop("`diff_x` must be a numeric vector.")
@@ -34,37 +40,79 @@ de_diff_series <- function(diff_x, original_x) {
     stop("`diff_x` and `original_x` must have the same length.")
   }
 
-  # Start with the original series
-  result <- original_x
-
-  # Find the first available original value
-  anchor <- which(!is.na(original_x))[1]
-
-  if (is.na(anchor)) {
-    stop("`original_x` must contain at least one non-missing value.")
+  if (length(differences) != 1 ||
+      !is.numeric(differences) ||
+      is.na(differences) ||
+      differences < 1 ||
+      differences != as.integer(differences)) {
+    stop("`differences` must be a positive integer.")
   }
 
-  # Reconstruct values after the anchor
-  if (anchor < length(result)) {
+  differences <- as.integer(differences)
 
-    for (i in (anchor + 1):length(result)) {
+  n <- length(original_x)
 
-      if (is.na(result[i]) && !is.na(diff_x[i]) && !is.na(result[i - 1])) {
-        result[i] <- result[i - 1] + diff_x[i]
+  if (n <= differences) {
+    stop("Series length must be greater than `differences`.")
+  }
+
+  # Find the last known observation
+  last_known <- max(which(!is.na(original_x)))
+
+  # If there are no missing values after the last known value,
+  # nothing needs to be reconstructed.
+  if (last_known == n) {
+    return(original_x)
+  }
+
+  # Start with the n-th differences
+  current <- diff_x
+
+  # Reconstruct lower-order differences
+  for (d in seq(differences, 1)) {
+
+    # Get known original values
+    known_x <- original_x[1:last_known]
+
+    # Create the required lower-order difference
+    if (d == 1) {
+      lower <- known_x
+    } else {
+      lower <- diff(known_x, differences = d - 1)
+    }
+
+    # Find the last known value
+    last_value <- lower[length(lower)]
+
+    # Reconstruct future values
+    future_idx <- (last_known + 1):n
+
+    for (i in future_idx) {
+
+      if (!is.na(current[i])) {
+        last_value <- last_value + current[i]
+        lower <- c(lower, last_value)
       }
     }
-  }
 
-  # Reconstruct values before the anchor
-  if (anchor > 1) {
+    # If this is the first difference, we now have
+    # the original series.
+    if (d == 1) {
 
-    for (i in (anchor - 1):1) {
+      result <- original_x
 
-      if (is.na(result[i]) && !is.na(diff_x[i + 1]) && !is.na(result[i + 1])) {
-        result[i] <- result[i + 1] - diff_x[i + 1]
-      }
+      result[(last_known + 1):n] <-
+        lower[(length(lower) - length(future_idx) + 1):length(lower)]
+
+      return(result)
     }
+
+    # Otherwise continue to the next lower difference.
+    current <- c(
+      rep(NA_real_, d - 1),
+      lower
+    )
   }
 
-  result
+  original_x
 }
