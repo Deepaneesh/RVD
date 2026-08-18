@@ -20,6 +20,25 @@ fill_spline(
   \item{back}{Logical. Should backward extrapolation be performed for leading missing values?}
 
   \item{method}{Character string specifying the spline method passed to \code{stats::splinefun()}.}
+  \item{method}{
+Character string specifying the interpolation method. Available methods are:
+
+\itemize{
+  \item \code{"monoH.FC"}: Monotone Hermite interpolation. This method
+  preserves the monotonicity of the supplied data and avoids introducing
+  unnecessary oscillations.
+
+  \item \code{"fmm"}: Forsythe-Malcolm-Moler cubic spline. This is the
+  default method used by \code{stats::spline()}.
+
+  \item \code{"natural"}: Natural cubic spline interpolation. The second
+  derivative is constrained to be zero at the endpoints.
+
+  \item \code{"periodic"}: Periodic cubic spline interpolation. This is
+  suitable for data where the beginning and end of the series are expected
+  to join smoothly.
+}
+}
 }
 \value{
 A numeric vector with missing values filled using spline interpolation and/or extrapolation.
