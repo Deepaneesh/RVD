@@ -24,7 +24,8 @@ load_rvd_packages <- function(update = FALSE) {
     "shiny",         # Shiny applications
     "colourpicker",  # Colour picker
     "connections",   # DBI connections
-    "DBI"            # Database connections
+    "DBI",           # Database connections
+    "scales"         # Customizing the scales in ggplot
   )
 
   # Check for missing packages
